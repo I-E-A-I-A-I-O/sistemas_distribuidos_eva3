@@ -1,0 +1,17 @@
+networks:
+  my-network:
+    driver: bridge
+
+services:
+  db:
+    container_name: database
+    image: postgres
+    ports:
+      - "${DB_PORT_HOST}:${DB_PORT}"
+    environment:
+      - POSTGRES_USERNAME=${POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./database/init.sh:/docker-entrypoint-initdb.d/init.sh
+    networks:
+      - my-network
