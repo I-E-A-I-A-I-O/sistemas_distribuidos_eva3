@@ -4,7 +4,7 @@ networks:
 
 services:
   db:
-    container_name: database
+    container_name: sde3-database
     image: postgres
     ports:
       - "${DB_PORT_HOST}:${DB_PORT}"
@@ -13,5 +13,17 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - ./database/init.sh:/docker-entrypoint-initdb.d/init.sh
+    networks:
+      - my-network
+  proxy:
+    container_name: sde3-proxy
+    build:
+      context: ./proxy
+      args:
+        - PORT=${PROXY_PORT}
+    environment:
+      - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
+    ports:
+      - "${PROXY_PORT}:${PROXY_PORT}"
     networks:
       - my-network
