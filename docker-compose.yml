@@ -15,6 +15,30 @@ services:
       - ./database/init.sh:/docker-entrypoint-initdb.d/init.sh
     networks:
       - my-network
+  log:
+    container_name: elk
+    build: ./ELK-log/
+    ports:
+      - "5601:5601"
+      - "9200:9200"
+      - "5044:5044"
+      - "7777:7777/udp"
+    networks:
+      - my-network
+#  auth-service:
+#    container_name: authservice
+#    build:
+#      context: ./auth_service
+#      args:
+#        - PORT=${AUTH_SERVICE_PORT}
+#    ports:
+#      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
+#    env_file:
+#      - .env
+#    depends_on:
+#      - db
+#    networks:
+#      - my-network
   proxy:
     container_name: sde3-proxy
     build:
