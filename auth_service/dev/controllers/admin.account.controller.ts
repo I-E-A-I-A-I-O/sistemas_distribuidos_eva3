@@ -11,13 +11,6 @@ export const deleteAcc = async (request: Request, reply: Response) => {
 
     if (!verify.success) return reply.status(400).json({ message: 'Invalid user id' })
 
-    const user = request.user!
-
-    if (user.role !== 'admin') {
-        log('warn', 'role-not-permitted', { reason: `non-admin user ${user.id} tried delete account ${userID}` }, request)
-        return reply.status(403).json({ message: 'You do not have permission to do that' })
-    }
-
     try {
         await pool.connect(async (conn) => {
             const result = await conn.query(sql`
@@ -28,7 +21,7 @@ export const deleteAcc = async (request: Request, reply: Response) => {
 
             if (result.rowCount < 1) return reply.status(404).json({ message: 'user not found' })
 
-            log('info', 'admin-deleted-account', {}, request)
+            log('info', 'admin-deleted-account', { reasonL: `Admin ${request.user?.id} deleted an account` }, request)
             reply.status(200).json({ message: 'account deleted' })
         })
     } catch (err) {
@@ -38,5 +31,32 @@ export const deleteAcc = async (request: Request, reply: Response) => {
 }
 
 export const editAcc = async (request: Request, reply: Response) => {
-    
+    const { userID } = request.params
+    const body = await zBasicUser.spa(request.body)
+    const verify = await z.string().spa(userID)
+
+    if (!verify.success) return reply.status(400).json({ message: 'Invalid user id' })
+    else if (!body.success) return reply.status(400).json({ message: 'Malformed request body' })
+
+    try {
+        await pool.connect(async (conn) => {
+            const result = await conn.query(sql`
+                UPDATE users.users
+                SET 
+                user_email = ${body.data.user_email},
+                user_name = ${body.data.user_name},
+                user_password = ${body.data.user_password}
+                WHERE user_id = ${userID}
+                RETURNING *
+            `)
+
+            if (result.rowCount < 1) return reply.status(404).json({ message: 'user not found' })
+
+            log('info', 'admin-updated-account', { reason: `admin ${request.user?.id} updated account data for user ${userID}` }, request)
+            reply.status(200).json({ message: 'Account updated' })
+        })
+    } catch(err) {
+        log('error', 'exception-caught', { reason: err }, request)
+        reply.status(500).json({ message: 'Error updating the account' })
+    } 
 }
