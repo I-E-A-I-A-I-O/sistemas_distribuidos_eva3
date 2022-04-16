@@ -1,8 +1,8 @@
 import express from 'express'
-import { createAcc } from '../controllers/account.controller'
+import { createAcc, deleteAcc } from '../controllers/account.controller'
+import { verifyToken } from '../helpers/jwt.middleware'
 
 export const accountRouter = express.Router()
 
 accountRouter.post('/', createAcc)
-accountRouter.patch('/:userID')
-accountRouter.delete('/:userID')
+accountRouter.delete('/', verifyToken, deleteAcc)

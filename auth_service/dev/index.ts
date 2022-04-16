@@ -15,7 +15,7 @@ server.use(async (request, reply, next) => {
     next()
 })
 
-server.use('/users', accountRouter)
+server.use('/auth/users', accountRouter)
 
 server.get('/health', async (request, reply) => {
     reply.sendStatus(200)
