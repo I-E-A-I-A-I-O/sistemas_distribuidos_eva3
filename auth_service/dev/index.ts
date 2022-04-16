@@ -4,6 +4,8 @@ dotenv.config({ path: path.join('..', '..', '.env') })
 import express from 'express'
 import { log } from './helpers/logger'
 import { accountRouter } from './routers/account.router'
+import { adminAccRouter } from './routers/admin.account.router'
+import { sessionRouter } from './routers/session.router'
 
 const PORT = process.env.AUTH_SERVICE_PORT || 3000
 const server = express()
@@ -15,7 +17,9 @@ server.use(async (request, reply, next) => {
     next()
 })
 
+server.use('/auth/session', sessionRouter)
 server.use('/auth/users', accountRouter)
+server.use('/auth/admin/users', adminAccRouter)
 
 server.get('/health', async (request, reply) => {
     reply.sendStatus(200)
