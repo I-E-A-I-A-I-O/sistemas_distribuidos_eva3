@@ -14,4 +14,9 @@ export const zDBUser = z.object({
     user_role: z.enum(['regular', 'admin'])
 })
 
+export const zCredentials = z.object({
+    user_email: z.string().email(),
+    user_password: z.string().min(2).max(30)
+})
+
 export type DBUser = z.infer<typeof zDBUser>
