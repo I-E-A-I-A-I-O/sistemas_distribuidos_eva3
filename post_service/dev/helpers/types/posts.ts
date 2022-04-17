@@ -1,5 +1,10 @@
 import z from 'zod'
 
+export const zCommentBody = z.object({
+    body: z.string().min(1).max(300),
+    parent: z.string().uuid()
+})
+
 export const zPostBody = z.object({
     body: z.string().min(1).max(300)
 })
