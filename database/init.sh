@@ -18,8 +18,9 @@ CREATE TABLE users.users (
 CREATE TABLE posts.posts (
     post_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     post_body VARCHAR(200) NOT NULL,
-    post_owner_id UUID REFERENCES users.users,
-    parent_post_id UUID REFERENCES posts.posts
+    post_date TIMESTAMP NOT NULL,
+    post_owner_id UUID REFERENCES users.users ON DELETE CASCADE ON UPDATE CASCADE,
+    parent_post_id UUID REFERENCES posts.posts ON DELETE SET NULL ON UPDATE CASCADE
 );
 CREATE TABLE posts.likes (
     like_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
