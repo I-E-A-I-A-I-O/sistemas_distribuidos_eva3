@@ -1,0 +1,46 @@
+{
+  "name": "friends_service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prestart": "npm run build",
+    "start": "node prod/index.js",
+    "start-dev": "nodemon dev/index.ts",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/I-E-A-I-A-I-O/sistemas_distribuidos_eva3.git"
+  },
+  "keywords": [
+    "docker",
+    "docker-compose",
+    "typescript",
+    "nodejs",
+    "expressjs",
+    "haproxy",
+    "postgresql"
+  ],
+  "author": "JustDancePC",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/I-E-A-I-A-I-O/sistemas_distribuidos_eva3/issues"
+  },
+  "homepage": "https://github.com/I-E-A-I-A-I-O/sistemas_distribuidos_eva3#readme",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
+    "jsonwebtoken": "^8.5.1",
+    "slonik": "^28.1.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/express": "^4.17.13",
+    "@types/jsonwebtoken": "^8.5.8",
+    "nodemon": "^2.0.15",
+    "typescript": "^4.6.3",
+    "zod": "^3.14.4"
+  }
+}
