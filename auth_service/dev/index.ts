@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 import path from 'path'
-dotenv.config({ path: path.join('..', '..', '.env') })
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') })
 import express from 'express'
 import { log } from './helpers/logger'
 import { accountRouter } from './routers/account.router'

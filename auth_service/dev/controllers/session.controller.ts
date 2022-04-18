@@ -19,7 +19,7 @@ export const login = async (request: Request, reply: Response) => {
             const users = await conn.query<DBUser>(sql`
                 SELECT * 
                 FROM users.users
-                WHERE user_email=${body.data.user_email}
+                WHERE user_email=${body.data.user_email.toLowerCase()}
             `)
             
             if (users.rowCount < 1) {
@@ -34,7 +34,7 @@ export const login = async (request: Request, reply: Response) => {
                 return reply.status(403).json({ message: 'Incorrect password' })
             }
 
-            const token = jwt.sign({ user_id: user.user_id, user_role: user.user_role }, process.env.JWT_SECRET!)
+            const token = jwt.sign({ id: user.user_id, role: user.user_role }, process.env.JWT_SECRET!)
             reply.status(201).json({ message: 'Login successful', token })
         })
     } catch (err) {

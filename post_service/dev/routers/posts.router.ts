@@ -6,3 +6,5 @@ export const postsRouter = express.Router()
 
 postsRouter.post('/', verifyToken, createPost)
 postsRouter.delete('/:postID', verifyToken, deletePost)
+postsRouter.get('/:postID')
+postsRouter.get('/:userID')

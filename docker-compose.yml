@@ -13,18 +13,22 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - ./database/init.sh:/docker-entrypoint-initdb.d/init.sh
+    depends_on:
+      - log
     networks:
       - my-network
-  log:
-    container_name: elk
-    build: ./ELK-log/
-    ports:
-      - "5601:5601"
-      - "9200:9200"
-      - "5044:5044"
-      - "7777:7777/udp"
-    networks:
-      - my-network
+#  log:
+#    container_name: elk
+#    build: ./ELK-log/
+#    ports:
+#      - "5601:5601"
+#      - "9200:9200"
+#      - "5044:5044"
+#      - "7777:7777/udp"
+#    environment:
+#      - ES_CONNECT_RETRY=300
+#    networks:
+#      - my-network
 #  auth-service:
 #    container_name: authservice
 #    build:
@@ -47,7 +51,10 @@ services:
         - PORT=${PROXY_PORT}
     environment:
       - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
+      - POST_SERVICE_PORT=${POST_SERVICE_PORT}
     ports:
       - "${PROXY_PORT}:${PROXY_PORT}"
+    depends_on:
+      - db
     networks:
       - my-network

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { zBasicUser, DBUser, zCredentials } from '../helpers/types/User'
+import { zBasicUser, DBUser } from '../helpers/types/User'
 import { log } from '../helpers/logger'
 import { pool } from '../helpers/database'
 import { sql } from 'slonik'
@@ -20,7 +20,7 @@ export const createAcc = async (request: Request, reply: Response) => {
             const insertedUser = await conn.query<DBUser>(sql`
                 INSERT 
                 INTO users.users(user_name, user_email, user_password, user_role)
-                VALUES(${body.data.user_name}, ${body.data.user_email}, ${password}, 'regular')
+                VALUES(${body.data.user_name}, ${body.data.user_email.toLowerCase()}, ${password}, 'regular')
                 RETURNING *
             `)
             log('info', 'user-registered', { message: `New user registered with ID ${insertedUser.rows[0].user_id}` }, request)

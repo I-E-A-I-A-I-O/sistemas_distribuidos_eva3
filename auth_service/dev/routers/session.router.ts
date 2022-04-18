@@ -3,4 +3,4 @@ import { login } from '../controllers/session.controller'
 
 export const sessionRouter = express.Router()
 
-sessionRouter.get('/', login)
+sessionRouter.post('/', login)

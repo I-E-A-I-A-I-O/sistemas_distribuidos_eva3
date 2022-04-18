@@ -11,7 +11,6 @@ export const createPost = async (request: Request, reply: Response) => {
     if (!body.success) return reply.status(400).json({ message: 'Malformed request body' })
 
     const user = request.user!
-
     try {
         await pool.connect(async (conn) => {
             const result = await conn.query<Post>(sql`
@@ -26,7 +25,7 @@ export const createPost = async (request: Request, reply: Response) => {
             reply.status(201).json({ message: 'Post created', post })
         })
     } catch(err) {
-        log('error', 'exception-caught', { reason: err }, request)
+        log('error', 'exception-caught', { reason: JSON.stringify(err) }, request)
         reply.status(500).json({ message: 'Error creating post' })
     }
 }
@@ -57,4 +56,45 @@ export const deletePost = async (request: Request, reply: Response) => {
         log('error', 'exception-caught', { reason: err }, request)
         reply.status(500).json({ message: 'Error deleting post' })
     }
+}
+
+export const getPost = async (request: Request, reply: Response) => {
+    const { postID } = request.params
+    const verify = await z.string().uuid().spa(postID)
+
+    if (!verify.success) return reply.status(400).json({ message: 'Invalid post ID' })
+
+    try {
+        await pool.connect(async (conn) => {
+            const result = await conn.maybeOne<Post>(sql`
+                SELECT
+                    po.post_id,
+                    po.post_body,
+                    po.post_date,
+                    us.user_name,
+                    likes
+                FROM posts.posts po
+                INNER JOIN users.users us
+                    ON us.user_id = po.post_owner_id
+                JOIN (
+                    SELECT 
+                        COUNT(*) as likes
+                    FROM posts.likes
+                    WHERE liked_post_id = ${postID}
+                ) likes
+                WHERE po.post_id = ${postID}
+            `)
+
+            if (!result) return reply.status(404).json({ message: 'Post not found' })
+
+            reply.status(200).json(result)
+        })
+    } catch(err) {
+        log('error', 'exception-caught', { reason: err }, request)
+        reply.status(500).json({ message: 'Error fetching post' })
+    }
+}
+
+export const getUserPosts = async (request: Request, reply: Response) => {
+
 }
