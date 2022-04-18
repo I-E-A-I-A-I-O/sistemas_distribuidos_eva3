@@ -25,7 +25,8 @@ CREATE TABLE posts.posts (
 CREATE TABLE posts.likes (
     like_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     like_owner_id UUID REFERENCES users.users,
-    liked_post_id UUID REFERENCES posts.posts
+    liked_post_id UUID REFERENCES posts.posts,
+    UNIQUE(like_owner_id, liked_post_id)
 );
 CREATE TABLE friends.friendships (
     friendship_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,

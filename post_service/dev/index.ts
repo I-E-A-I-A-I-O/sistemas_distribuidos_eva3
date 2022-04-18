@@ -5,6 +5,7 @@ import express from 'express'
 import { log } from './helpers/logger'
 import { postsRouter } from './routers/posts.router'
 import { adminPostRouter } from './routers/admin.posts.router'
+import { likesRouter } from './routers/likes.router'
 
 const PORT = process.env.POST_SERVICE_PORT || 3001
 const server = express()
@@ -17,6 +18,7 @@ server.use(async (request, reply, next) => {
 })
 
 server.use('/posts', postsRouter)
+server.use('/posts', likesRouter)
 server.use('/posts/admin', adminPostRouter)
 
 server.get('/health', async (request, reply) => {
