@@ -15,7 +15,7 @@ export const createPost = async (request: Request, reply: Response) => {
         await pool.connect(async (conn) => {
             const result = await conn.query<Post>(sql`
                 INSERT
-                INTO posts.posts(post_body, post_date, post_owner_id, comment_to_post_id)
+                INTO posts.posts(post_body, post_date, post_owner_id, parent_post_id)
                 VALUES (${body.data.body}, ${(new Date()).toISOString()}, ${user.id}, NULL)
                 RETURNING *
             `)
@@ -25,6 +25,7 @@ export const createPost = async (request: Request, reply: Response) => {
             reply.status(201).json({ message: 'Post created', post })
         })
     } catch(err) {
+        console.log(err)
         log('error', 'exception-caught', { reason: JSON.stringify(err) }, request)
         reply.status(500).json({ message: 'Error creating post' })
     }

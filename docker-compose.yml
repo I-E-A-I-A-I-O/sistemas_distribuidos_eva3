@@ -13,8 +13,8 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - ./database/init.sh:/docker-entrypoint-initdb.d/init.sh
-    depends_on:
-      - log
+    #depends_on:
+    #  - log
     networks:
       - my-network
 #  log:
