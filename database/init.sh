@@ -30,13 +30,13 @@ CREATE TABLE posts.likes (
 );
 CREATE TABLE friends.friendships (
     friendship_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    user_id UUID REFERENCES users.users,
-    friend_id UUID REFERENCES users.users
+    user_id UUID REFERENCES users.users ON DELETE CASCADE,
+    friend_id UUID REFERENCES users.users ON DELETE CASCADE
 );
 CREATE TABLE friends.requests (
     request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    request_owner_id UUID REFERENCES users.users,
-    requested_to_id UUID REFERENCES users.users,
+    request_owner_id UUID REFERENCES users.users ON DELETE CASCADE,
+    requested_to_id UUID REFERENCES users.users ON DELETE CASCADE,
     request_status VARCHAR(25) NOT NULL
 );
 EOSQL
