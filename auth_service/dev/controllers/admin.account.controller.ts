@@ -5,6 +5,27 @@ import { pool } from '../helpers/database'
 import { sql } from 'slonik'
 import z from 'zod'
 
+export const listUsers = async (request: Request, reply: Response) => {
+    try {
+        await pool.connect(async (conn) => {
+            const result = await conn.query(sql`
+                SELECT 
+                    user_id,
+                    user_name,
+                    user_email,
+                    user_role
+                FROM users.users
+            `)
+
+            log('info', 'admin-user-list-request', { reasonL: `Admin ${request.user?.id} requested the list of users` }, request)
+            reply.status(200).json({ result })
+        })
+    } catch (err) {
+        log('error', 'exception-caught', { reason: err }, request)
+        reply.status(500).json({ message: 'Error fetching users list' })
+    }
+}
+
 export const deleteAcc = async (request: Request, reply: Response) => {
     const { userID } = request.params
     const verify = await z.string().spa(userID)

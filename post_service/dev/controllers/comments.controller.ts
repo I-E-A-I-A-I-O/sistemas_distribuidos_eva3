@@ -7,7 +7,7 @@ import { Post, zPostBody } from "../helpers/types/posts";
 
 export const createComment = async (request: Request, reply: Response) => {
     const { postID } = request.params
-    const verify = await z.string().uuid().spa(request.body)
+    const verify = await z.string().uuid().spa(postID)
     const body = await zPostBody.spa(request.body)
 
     if (!body.success) return reply.status(400).json({ message: 'Malformed request body' })

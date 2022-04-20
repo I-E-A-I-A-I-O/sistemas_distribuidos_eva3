@@ -52,6 +52,7 @@ services:
     environment:
       - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
       - POST_SERVICE_PORT=${POST_SERVICE_PORT}
+      - FRIENDS_SERVICE_PORT=${FRIENDS_SERVICE_PORT}
     ports:
       - "${PROXY_PORT}:${PROXY_PORT}"
     depends_on:

@@ -13,6 +13,8 @@ export const sendRequest = async (request: Request, reply: Response) => {
 
     const user = request.user!
 
+    if (user.id === userID) return reply.status(400).json({ message: 'Can not send friend request to yourself' })
+
     try {
         await pool.connect(async (conn) => {
             const result = await conn.maybeOne(sql`
@@ -22,7 +24,16 @@ export const sendRequest = async (request: Request, reply: Response) => {
             AND friend_id = ${userID}
             `)
 
+            const requests = await conn.query(sql`
+            SELECT *
+            FROM friends.requests
+            WHERE request_owner_id = ${user.id}
+            AND requested_to_id = ${userID}
+            AND request_status = 'PENDING'
+            `)
+
             if (result) return reply.status(400).json({ message: 'Can not send friend request. User is already a friend' })
+            else if (requests.rowCount > 0) return reply.status(400).json({ message: 'Friend request already sent' })
 
             await conn.query(sql`
             INSERT
@@ -54,9 +65,9 @@ export const getRequests = async (request: Request, reply: Response) => {
             INNER JOIN users.users us
                 ON us.user_id = fr.requested_to_id
             WHERE 
-                request_owner_id = ${user.id}
+                fr.request_owner_id = ${user.id}
             AND
-                request_status = 'PENDING'
+                fr.request_status = 'PENDING'
             `)
 
             const receivedRequests = await conn.query(sql`
@@ -65,16 +76,16 @@ export const getRequests = async (request: Request, reply: Response) => {
                 us.user_id,
                 us.user_name,
                 fr.request_status
-            FROM friend.requests fr
-            INNER JOIN user.users us
+            FROM friends.requests fr
+            INNER JOIN users.users us
                 ON us.user_id = fr.request_owner_id
             WHERE
-                requested_to_id = ${user.id}
+                fr.requested_to_id = ${user.id}
             AND
-                request_status = 'PENDING'
+                fr.request_status = 'PENDING'
             `)
 
-            reply.status(200).json({ sentRequests, receivedRequests })
+            reply.status(200).json({ sentRequests: sentRequests.rows, receivedRequests: receivedRequests.rows })
         })
     } catch(err) {
         log('error', 'exception-caught', { reason: err }, request)
@@ -129,12 +140,13 @@ export const acceptRequest = async (request: Request, reply: Response) => {
             SET request_status = 'ACCEPTED'
             WHERE request_id = ${requestID}
             AND request_status = 'PENDING'
+            AND requested_to_id = ${user.id}
             RETURNING *
             `)
 
             if (request.rowCount < 1) return reply.status(404).json({ message: 'Request not found' })
 
-            const userID = request.rows[0].requested_to_id
+            const userID = request.rows[0].request_owner_id
 
             await conn.query(sql`
             INSERT
@@ -149,9 +161,8 @@ export const acceptRequest = async (request: Request, reply: Response) => {
             `)
 
             log('info', 'friend-request-accepted', { reason: `user ${user.id} befriended user ${userID}` })
+            reply.status(200).json({ message: 'Friend request accepted' })
         })
-
-        reply.status(200).json({ message: 'Friend request accepted' })
     } catch(err) {
         log('error', 'exception-caught', { reason: err }, request)
         reply.status(500).json({ message: 'Error accepting friend request' })
@@ -173,6 +184,7 @@ export const rejectRequest = async (request: Request, reply: Response) => {
             SET request_status = 'REJECTED'
             WHERE request_id = ${requestID}
             AND request_status = 'PENDING'
+            AND requested_to_id = ${user.id}
             RETURNING *
             `)
 

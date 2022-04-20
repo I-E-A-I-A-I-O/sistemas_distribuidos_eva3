@@ -74,21 +74,25 @@ export const getPost = async (request: Request, reply: Response) => {
                 po.post_date,
                 us.user_id as poster_id,
                 us.user_name as poster,
-                COUNT(pl) as likes,
-                COUNT(pc) as comments
+                pl.post_likes,
+                pc.post_comments
             FROM posts.posts po 
             INNER JOIN users.users us 
                 ON us.user_id = po.post_owner_id
-            LEFT JOIN posts.likes pl
-                ON pl.liked_post_id = po.post_id
-            LEFT JOIN posts.posts pc
-                ON pc.parent_post_id = po.post_id
-            GROUP BY
-                po.post_id,
-                po.post_body,
-                po.post_date,
-                poster_id,
-                poster
+            LEFT JOIN (
+                SELECT
+                    liked_post_id,
+                    COUNT(*) AS post_likes
+                FROM posts.likes
+                GROUP BY liked_post_id
+            ) pl ON pl.liked_post_id = po.post_id
+            LEFT JOIN (
+                SELECT
+                    parent_post_id,
+                    COUNT(*) AS post_comments
+                FROM posts.posts
+                GROUP BY parent_post_id
+            ) pc ON pc.parent_post_id = po.post_id
             WHERE po.post_id = ${postID}
             `)
 
@@ -117,31 +121,35 @@ export const getUserPosts = async (request: Request, reply: Response) => {
                 po.post_date,
                 us.user_id as poster_id,
                 us.user_name as poster,
-                COUNT(pl) as likes,
-                COUNT(pc) as comments
+                pl.post_likes,
+                pc.post_comments
             FROM posts.posts po 
             INNER JOIN users.users us 
                 ON us.user_id = po.post_owner_id
-            LEFT JOIN posts.likes pl
-                ON pl.liked_post_id = po.post_id
-            LEFT JOIN posts.posts pc
-                ON pc.parent_post_id = po.post_id
-            GROUP BY
-                po.post_id,
-                po.post_body,
-                po.post_date,
-                poster_id,
-                poster
+            LEFT JOIN (
+                SELECT
+                    liked_post_id,
+                    COUNT(*) AS post_likes
+                FROM posts.likes
+                GROUP BY liked_post_id
+            ) pl ON pl.liked_post_id = po.post_id
+            LEFT JOIN (
+                SELECT
+                    parent_post_id,
+                    COUNT(*) AS post_comments
+                FROM posts.posts
+                GROUP BY parent_post_id
+            ) pc ON pc.parent_post_id = po.post_id
             WHERE
-                poster_id = ${userID}
+                us.user_id = ${userID}
             `)
 
             if (result.rowCount < 1) return reply.status(200).json({ message: 'User not found or does not have any posts' })
 
-            reply.status(200).json(result)
+            reply.status(200).json(result.rows)
         })
     } catch(err) {
         log('error', 'exception-caught', { reason: err }, request)
-        reply.status(500).json({ message: 'Error fetching post' })
+        reply.status(500).json({ message: 'Error fetching posts' })
     }
 }

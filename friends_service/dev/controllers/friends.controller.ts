@@ -15,11 +15,11 @@ export const getFriends = async (request: Request, reply: Response) => {
                 us.user_name
             FROM friends.friendships f
             INNER JOIN users.users us
-                ON us.user_id = f.user_id
+                ON us.user_id = f.friend_id
             WHERE f.user_id = ${user.id}
             `)
 
-            reply.status(200).json({ message: result })
+            reply.status(200).json({ friends: result.rows })
         })
     } catch(err) {
         log('error', 'exception-caught', { reason: err }, request)

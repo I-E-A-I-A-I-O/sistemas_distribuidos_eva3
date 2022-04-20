@@ -7,7 +7,7 @@ import { log } from "../helpers/logger";
 
 export const likePost = async (request: Request, reply: Response) => {
     const { postID } = request.params
-    const verify = await z.string().uuid().spa(request.body)
+    const verify = await z.string().uuid().spa(postID)
 
     if (!verify.success) return reply.status(400).json({ message: 'Invalid post id' })
 
@@ -15,6 +15,15 @@ export const likePost = async (request: Request, reply: Response) => {
 
     try {
         await pool.connect(async (conn) => {
+            const likes = await conn.query(sql`
+                SELECT *
+                FROM posts.likes
+                WHERE like_owner_id = ${user.id}
+                AND liked_post_id = ${postID}
+            `)
+
+            if (likes.rowCount > 0) return reply.status(400).json({ message: 'Post already liked' })
+
             await conn.query(sql`
                 INSERT
                 INTO posts.likes(like_owner_id, liked_post_id)
@@ -32,7 +41,7 @@ export const likePost = async (request: Request, reply: Response) => {
 
 export const unlikePost = async (request: Request, reply: Response) => {
     const { postID } = request.params
-    const verify = await z.string().uuid().spa(request.body)
+    const verify = await z.string().uuid().spa(postID)
 
     if (!verify.success) return reply.status(400).json({ message: 'Invalid post id' })
 
@@ -44,6 +53,7 @@ export const unlikePost = async (request: Request, reply: Response) => {
                 DELETE FROM posts.likes
                 WHERE
                     like_owner_id = ${user.id}
+                AND
                     liked_post_id = ${postID}
                 RETURNING *
             `)
@@ -55,6 +65,6 @@ export const unlikePost = async (request: Request, reply: Response) => {
         })
     } catch(err) {
         log('error', 'exception-caught', { reason: err }, request)
-        reply.status(500).json({ message: 'Error liking post' })
+        reply.status(500).json({ message: 'Error unliking post' })
     }
 }
