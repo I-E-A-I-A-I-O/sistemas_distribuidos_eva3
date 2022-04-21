@@ -17,6 +17,13 @@ services:
     #  - log
     networks:
       - my-network
+  cache-server:
+    container_name: sde3-cache
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - my-network
 #  log:
 #    container_name: elk
 #    build: ./ELK-log/

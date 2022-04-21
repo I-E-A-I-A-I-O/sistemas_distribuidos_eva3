@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { sql } from 'slonik'
 import { z } from 'zod'
+import { CacheClient } from '../helpers/cache-client'
 import { pool } from '../helpers/database'
 import { log } from '../helpers/logger'
 import { Post, zPostBody } from '../helpers/types/posts'
@@ -21,6 +22,14 @@ export const createPost = async (request: Request, reply: Response) => {
             `)
 
             const post = result.rows[0]
+            const cachedData = await CacheClient.get(`${user.id}-POSTS`)
+
+            if (cachedData) {
+                const obj: Post[] = JSON.parse(cachedData)
+                obj.push(post)
+                await CacheClient.set(`${user.id}-POSTS`, JSON.stringify(obj))
+            }
+
             log('info', 'post-created', { reason: `user ${user.id} created a new post ${post.post_id}` }, request)
             reply.status(201).json({ message: 'Post created', post })
         })
@@ -50,6 +59,7 @@ export const deletePost = async (request: Request, reply: Response) => {
 
             if (result.rowCount < 1) return reply.status(400).json({ message: 'Could not delete the post' })
 
+            await CacheClient.del(`${postID}-SINGLE`)
             log('info', 'post-deleted', { reason: `user ${user.id} deleted a post` }, request)
             reply.status(200).json({ message: 'Post deleted' })
         })
@@ -64,6 +74,13 @@ export const getPost = async (request: Request, reply: Response) => {
     const verify = await z.string().uuid().spa(postID)
 
     if (!verify.success) return reply.status(400).json({ message: 'Invalid post ID' })
+
+    const cachedData = await CacheClient.get(`${postID}-SINGLE`)
+
+    if (cachedData) {
+        log('info', 'cache-read', { reason: `Cache key ${postID}-SINGLE read` }, request)
+        return reply.status(200).json(JSON.parse(cachedData))
+    }
 
     try {
         await pool.connect(async (conn) => {
@@ -98,6 +115,8 @@ export const getPost = async (request: Request, reply: Response) => {
 
             if (!result) return reply.status(404).json({ message: 'Post not found' })
 
+            await CacheClient.set(`${postID}-SINGLE`, JSON.stringify(result), { EX: 300 })
+            log('info', 'cache-updated', { reason: `Cache key ${postID}-SINGLE updated` }, request)
             reply.status(200).json(result)
         })
     } catch(err) {
@@ -111,6 +130,13 @@ export const getUserPosts = async (request: Request, reply: Response) => {
     const verify = await z.string().uuid().spa(userID)
 
     if (!verify.success) return reply.status(400).json({ message: 'Invalid user ID' })
+
+    const cachedData = await CacheClient.get(`${userID}-POSTS`)
+
+    if (cachedData) {
+        log('info', 'cache-read', { reason: `Cache key ${userID}-POSTS read` }, request)
+        return reply.status(200).json(JSON.parse(cachedData))
+    }
 
     try {
         await pool.connect(async (conn) => {
@@ -146,6 +172,8 @@ export const getUserPosts = async (request: Request, reply: Response) => {
 
             if (result.rowCount < 1) return reply.status(200).json({ message: 'User not found or does not have any posts' })
 
+            await CacheClient.set(`${userID}-POSTS`, JSON.stringify(result.rows), { EX: 300 })
+            log('info', 'cache-updated', { reason: `Cache key ${userID}-POSTS updated` }, request)
             reply.status(200).json(result.rows)
         })
     } catch(err) {
