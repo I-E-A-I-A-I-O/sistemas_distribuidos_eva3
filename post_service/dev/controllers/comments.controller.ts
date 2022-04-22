@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { sql } from "slonik";
 import { z } from "zod";
+import { CacheClient } from "../helpers/cache-client";
 import { pool } from "../helpers/database";
 import { log } from "../helpers/logger";
 import { Post, zPostBody } from "../helpers/types/posts";
@@ -10,6 +11,13 @@ export const getComments = async (request: Request, reply: Response) => {
     const verify = await z.string().uuid().spa(postID)
 
     if (!verify.success) return reply.status(400).json({ message: 'Invalid post id' })
+
+    const cachedData = await CacheClient.get(`${postID}-SINGLE`)
+
+    if (cachedData) {
+        log('info', 'cache-read', { reason: `Cache key ${postID}-COMMENTS read` }, request)
+        return reply.status(200).json(JSON.parse(cachedData))
+    }
 
     try {
         await pool.connect(async (conn) => {
@@ -42,6 +50,8 @@ export const getComments = async (request: Request, reply: Response) => {
             WHERE po.parent_post_id = ${postID}
             `)
 
+            await CacheClient.set(`${postID}-COMMENTS`, JSON.stringify(result.rows))
+            log('info', 'cache-updated', { reason: `Cache key ${postID}-COMMENTS updated` }, request)
             reply.status(200).json({ comments: result.rows })
         })
     } catch(err) {
@@ -69,6 +79,7 @@ export const createComment = async (request: Request, reply: Response) => {
             RETURNING *
             `)
 
+            await CacheClient.del(`${postID}-COMMENTS`)
             log('info', 'comment-created', { reason: `user ${user.id} created comment ${result.post_id} on post ${postID}` }, request)
             reply.status(201).json({ message: 'Comment created', comment: result })
         })
