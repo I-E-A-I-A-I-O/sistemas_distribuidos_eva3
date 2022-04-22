@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { sql } from "slonik";
 import { z } from "zod";
+import { CacheClient } from "../helpers/cache-client";
 import { pool } from "../helpers/database";
 import { log } from "../helpers/logger";
 
@@ -9,6 +10,13 @@ export const getLikes = async (request: Request, reply: Response) => {
     const verify = await z.string().uuid().spa(postID)
 
     if (!verify.success) return reply.status(400).json({ message: 'Invalid post id' })
+
+    const cachedData = await CacheClient.get(`${postID}-LIKES`)
+
+    if (cachedData) {
+        log('info', 'cache-read', { reason: `Cache key ${postID}-LIKES read` }, request)
+        return reply.status(200).json(JSON.parse(cachedData))
+    }
 
     try {
         await pool.connect(async (conn) => {
@@ -22,6 +30,8 @@ export const getLikes = async (request: Request, reply: Response) => {
                 WHERE pl.liked_post_id = ${postID}
             `)
 
+            await CacheClient.set(`${postID}-LIKES`, JSON.stringify(likes.rows))
+            log('info', 'cache-updated', { reason: `Cache key ${postID}-LIKES updated` }, request)            
             reply.status(200).json({ likes: likes.rows })
         })
     } catch(err) {
@@ -55,6 +65,7 @@ export const likePost = async (request: Request, reply: Response) => {
                 VALUES(${user.id}, ${postID})
             `)
 
+            await CacheClient.del(`${postID}-LIKES`)
             log('info', 'post-liked', { reason: `user ${user.id} liked post ${postID}` }, request)
             reply.status(201).json({ message: 'Post liked' })
         })
@@ -85,6 +96,7 @@ export const unlikePost = async (request: Request, reply: Response) => {
 
             if (result.rowCount < 1) return reply.status(404).json({ message: 'User or post like not found' })
 
+            await CacheClient.del(`${postID}-LIKES`)
             log('info', 'post-unliked', { reason: `user ${user.id} removed like from post ${postID}` }, request)
             reply.status(200).json({ message: 'Post like removed' })
         })

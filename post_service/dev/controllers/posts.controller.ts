@@ -60,6 +60,7 @@ export const deletePost = async (request: Request, reply: Response) => {
             if (result.rowCount < 1) return reply.status(400).json({ message: 'Could not delete the post' })
 
             await CacheClient.del(`${postID}-SINGLE`)
+            await CacheClient.del(`${user.id}-POSTS`)
             log('info', 'post-deleted', { reason: `user ${user.id} deleted a post` }, request)
             reply.status(200).json({ message: 'Post deleted' })
         })
