@@ -34,5 +34,7 @@ export const log = async (severity: 'error' | 'warn' | 'info' | 'debug', type: s
         fields,
         host
     })
-    client.send(payload, Number.parseInt(process.env.LS_PORT || "7777"), process.env.LS_HOST)
+    client.send(payload, Number.parseInt(process.env.LS_PORT || "7777"), process.env.LS_HOST, (err, bytes) => {
+        if (err) console.error(err)
+    })
 }

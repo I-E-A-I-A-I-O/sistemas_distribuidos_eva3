@@ -19,37 +19,68 @@ services:
       - my-network
   cache-server:
     container_name: sde3-cache
-    image: redis:latest
+    build: ./Redis
     ports:
       - "6379:6379"
     networks:
       - my-network
-#  log:
-#    container_name: elk
-#    build: ./ELK-log/
-#    ports:
-#      - "5601:5601"
-#      - "9200:9200"
-#      - "5044:5044"
-#      - "7777:7777/udp"
-#    environment:
-#      - ES_CONNECT_RETRY=300
-#    networks:
-#      - my-network
-#  auth-service:
-#    container_name: authservice
-#    build:
-#      context: ./auth_service
-#      args:
-#        - PORT=${AUTH_SERVICE_PORT}
-#    ports:
-#      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
-#    env_file:
-#      - .env
-#    depends_on:
-#      - db
-#    networks:
-#      - my-network
+  log:
+    container_name: elk
+    build: ./ELK-log/
+    ports:
+      - "5601:5601"
+      - "9200:9200"
+      - "5044:5044"
+      - "7777:7777/udp"
+    environment:
+      - ES_CONNECT_RETRY=300
+    networks:
+      - my-network
+  auth-service:
+    container_name: authservice
+    build:
+      context: ./auth_service
+      args:
+        - PORT=${AUTH_SERVICE_PORT}
+    ports:
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - cache-server
+    networks:
+      - my-network
+  post_service:
+    container_name: postservice
+    build:
+      context: ./post_service
+      args:
+        - PORT=${POST_SERVICE_PORT}
+    ports:
+      - "${POST_SERVICE_PORT}:${POST_SERVICE_PORT}"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - cache-server
+    networks:
+      - my-network
+  friends_service:
+    container_name: friendservice
+    build:
+      context: ./friends_service
+      args:
+        - PORT=${FRIENDS_SERVICE_PORT}
+    ports:
+      - "${FRIENDS_SERVICE_PORT}:${FRIENDS_SERVICE_PORT}"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - cache-server
+    networks:
+      - my-network
   proxy:
     container_name: sde3-proxy
     build:

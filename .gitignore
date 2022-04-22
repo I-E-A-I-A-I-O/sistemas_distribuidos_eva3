@@ -4,3 +4,4 @@ node_modules
 package-lock.json
 prod
 distsis3.session.sql
+redis.conf
